@@ -25,6 +25,7 @@ Installation is really, really simple. I deliberately wrote the script to be as 
 require additional PHP/Server configuration when setting it up. That said, it *does* require PHP 5.3.0 or later. See 
 the documentation for more info.
 
+*** Please download one of the releases/tags and not `master`. The master branch of the repo is for ongoing work and is often unstable. ***
 
 ## Pre-packaged solutions
 
