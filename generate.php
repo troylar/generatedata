@@ -1,12 +1,15 @@
 <?php
-
 require_once(__DIR__ . "/library.php");
+use Aws\S3\S3Client;
 
 Core::init("generation");
 $gen = new DataGenerator(Constants::GEN_ENVIRONMENT_POST, $_POST);
 $response = $gen->generate();
 
-if ($gen->getExportTarget() == "promptDownload") {
+if ($gen->getExportTarget() == "promptDownload" || $gen->getExportTarget() == "uploadToS3") {
+	ini_set("log_errors", 1);
+	ini_set("error_log", "/tmp/php-error.log");
+	error_log('uploading');
 	header("Cache-Control: private, no-cache, must-revalidate");
 
 	// check if user opted to zip the generated data
@@ -22,9 +25,32 @@ if ($gen->getExportTarget() == "promptDownload") {
 			$zip = new ZipArchive();
 			$zipFile = $zip->open($zipPath, ZipArchive::CREATE);
 			if ($zipFile && $zip->addFile($filePath, $response["promptDownloadFilename"])) {
-
 				// we've got our zip file now we may set the response header
 				$zip->close();
+				if ($gen->getExportTarget() == "uploadToS3")
+				{
+				try {
+						$s3 = new S3Client([
+						    'version' => 'latest',
+						    'region' => Core::getRegionName(),
+						    'credentials' => array(
+							    'key' => Core::getAwsKey(),
+							    'secret'  => Core::getAwsSecret(),
+							)
+						]);
+					    $s3->putObject([
+					        'Bucket' => Core::getS3BucketName(),
+					        'Key'    => $response["promptDownloadFilename"],
+					        'Body'   => fopen($zipPath, 'r')
+					    ]);
+					} catch (Exception $e) {
+						error_log("Failed upload " . $response["promptDownloadFilename"] . " to " . Core::getS3BucketName());
+					    error_log("There was an error uploading the file:\n" . $e);
+					}
+					error_log("DONE!");
+					exit;
+
+				}
 				header("Content-type: application/zip");
 				header("Content-Disposition: attachment; filename=" . $response["promptDownloadFilename"] . ".zip");
 				readfile($zipPath);

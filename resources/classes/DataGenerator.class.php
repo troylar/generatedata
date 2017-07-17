@@ -55,7 +55,7 @@ class DataGenerator {
 		$response["addHeadersInNewWindow"] = $this->exportType->addHeadersInNewWindow();
 		$response["isComplete"] = $this->isLastBatch;
 
-		if ($this->exportTarget == "promptDownload") {
+		if ($this->exportTarget == "promptDownload" || $this->exportTarget == "uploadToS3") {
 			$response["promptDownloadFilename"] = $this->exportType->getDownloadFilename($this);
 		}
 
@@ -73,7 +73,7 @@ class DataGenerator {
 	 * @param $postData
 	 */
 	private function initUIGenerator($postData) {
-		$this->exportTarget = $postData["gdExportTarget"]; // inPage, newTab or promptDownload
+		$this->exportTarget = $postData["gdExportTarget"]; // inPage, newTab, promptDownload or uploadToS3
 
 		if ($this->exportTarget == "inPage") {
 			$this->batchSize  = $postData["gdBatchSize"];
@@ -108,7 +108,7 @@ class DataGenerator {
 		$this->exportType = ExportTypePluginHelper::getExportTypeByFolder($postData["gdExportType"]);
 
 		// set the value of isCompressionRequired
-		if ($postData["gdExportTarget"] == "promptDownload" && $postData["gdExportTarget_promptDownload_zip"] == "doZip") {
+		if ((($postData["gdExportTarget"] == "promptDownload") || ($postData["gdExportTarget"] == "uploadToS3")) && $postData["gdExportTarget_promptDownload_zip"] == "doZip") {
 			$this->isCompressionRequired = true;
 		}
 	}
@@ -352,6 +352,7 @@ class DataGenerator {
 	 * 		"inPage"
 	 * 		"newTab"
 	 * 		"promptDownload"
+	 * 		"uploadToS3"
 	 * @return string
 	 */
 	public function getExportTarget() {

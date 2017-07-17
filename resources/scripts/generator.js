@@ -682,12 +682,17 @@ define([
   // only enable the Zip checkbox if the Prompt to Download export target is selected
   var _handleZipOption = function () {
     var selectedTarget = $("input[name=gdExportTarget]:checked").val();
-    if (selectedTarget === "promptDownload") {
+    if (selectedTarget === "promptDownload" || selectedTarget === "uploadToS3") {
       $("#gdExportTarget_promptDownload_zip").removeAttr("disabled");
       $("#gdExportTarget_promptDownload_zip_label").removeClass("gdDisabled");
+      if (selectedTarget === "uploadToS3") {
+        $("#gdExportTarget_promptDownload_zip").attr("disabled", "disabled");
+        $("#gdExportTarget_promptDownload_zip").attr("checked", "checked");
+      }
     } else {
       $("#gdExportTarget_promptDownload_zip").attr("disabled", "disabled");
       $("#gdExportTarget_promptDownload_zip_label").addClass("gdDisabled");
+      $("#gdExportTarget_promptDownload_zip").removeAttr("checked");
     }
   };
 
@@ -821,7 +826,6 @@ define([
    * and starts the data generation process.
    */
   var _generateData = function (e) {
-
     // TODO pretty poor. Validation should be performed on this var prior to setting it in the private var
     _numRowsToGenerate = _getNumRowsToGenerate()
     utils.clearValidationErrors($("#gdMainTab1Content"));
@@ -932,7 +936,11 @@ define([
     } else if (exportTarget == "newTab") {
       _generateNewWindow();
     } else if (exportTarget == "promptDownload") {
-      _generatePromptDownload();
+          _generatePromptDownload();
+    }
+    else if (exportTarget == "uploadToS3") {
+      e.preventDefault();
+       _uploadToS3();
     }
   };
 
@@ -1032,6 +1040,38 @@ define([
       console.warn("response.success fail");
     }
   };
+
+  var _uploadToS3 = function (response) {
+    var formData = $("#gdData").serialize();
+
+    // "action" added for AjaxRequest only
+    var data = formData + "&action=uploadToS3";
+    if (_currConfigurationID !== null) {
+      data += "&configurationID=" + _currConfigurationID;
+    }
+    utils.startProcessing();
+
+    _isGenerating = true;
+
+    _codeMirror.setValue("");
+
+    utils.displayMessage("#gdMessages", "Generating data and uploading to S3 . . .");
+    $.ajax({
+      url: "ajax.php",
+      type: "POST",
+      data: data,
+      dataType: "json",
+      contentType: "application/x-www-form-urlencoded;charset=utf-8",
+      success: function (response) {
+         utils.stopProcessing();
+         utils.displayMessage("#gdMessages", "<p style='text-align:center'><b>" + response.keyName + "</b> uploaded to bucket <b>" + response.bucketName + "</b>.<br>Click <b><a href='" + response.url + "'>here</a></b> to download the file <i>(this link expires in 5 minutes)</i>.");
+      },
+      error: function () {
+        _isGenerating = false;
+        utils.stopProcessing();
+      }
+    });
+  }
 
   var _incrementConfigurationRowGenerationCount = function (configurationID, numRows) {
 
@@ -1732,6 +1772,7 @@ define([
   var _onError = function (response) {
     console.log("on error");
     console.log(response);
+    alert(response);
   };
 
   var _getConfiguration = function (configurationID) {

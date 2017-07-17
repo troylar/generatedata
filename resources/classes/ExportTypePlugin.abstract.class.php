@@ -71,7 +71,7 @@ abstract class ExportTypePlugin {
 	 * out those options that aren't selectable as soon as the user selects the Export Type.
 	 * @var string
 	 */
-	protected $compatibleExportTargets = array("inPage", "newTab", "promptDownload");
+	protected $compatibleExportTargets = array("inPage", "newTab", "promptDownload", "uploadToS3");
 
 	/**
 	 * Contains all strings for the current language. This is populated automatically on instantiation and

@@ -19,8 +19,12 @@ class Core {
 	private static $dbPassword;
 	private static $dbTablePrefix = "gd_";
 	private static $encryptionSalt;
+	private static $s3BucketName;
+	private static $regionName;
+	private static $awsKey;
+	private static $awsSecret;
 	private static $errorReporting = 1;
-	private static $maxGeneratedRows = 100000;
+	private static $maxGeneratedRows = 1000000000;
 	private static $defaultNumRows = 100;
 	private static $maxDemoModeRows = 100;
     private static $maxDataSetHistorySize = 200;
@@ -176,6 +180,10 @@ class Core {
 			self::$dbTablePrefix = (isset($dbTablePrefix)) ? $dbTablePrefix : null;
 			self::$encryptionSalt = (isset($encryptionSalt)) ? $encryptionSalt : null;
 			self::$pluginSettings = (isset($pluginSettings)) ? $pluginSettings : array();
+			self::$s3BucketName = (isset($s3BucketName)) ? $s3BucketName : null;
+			self::$awsKey = (isset($awsKey)) ? $awsKey : null;
+			self::$awsSecret = (isset($awsSecret)) ? $awsSecret : null;
+			self::$regionName = (isset($regionName)) ? $regionName : null;
 
 			if (isset($demoMode)) {
 				self::$demoMode = $demoMode;
@@ -294,6 +302,34 @@ class Core {
 	 */
 	public static function getEncryptionSalt() {
 		return self::$encryptionSalt;
+	}
+
+	/**
+	 * @access public
+	 */
+	public static function getRegionName() {
+		return self::$regionName;
+	}
+
+	/**
+	 * @access public
+	 */
+	public static function getS3BucketName() {
+		return self::$s3BucketName;
+	}
+
+	/**
+	 * @access public
+	 */
+	public static function getAwsKey() {
+		return self::$awsKey;
+	}
+
+	/**
+	 * @access public
+	 */
+	public static function getAwsSecret() {
+		return self::$awsSecret;
 	}
 
 	/**
