@@ -370,9 +370,68 @@ class AjaxRequest {
 				$this->response["content"]    = $response["content"];
 				$this->response["isComplete"] = $response["isComplete"];
 				break;
-		}
-	}
 
+            case "uploadToS3":
+                Core::init("generation");
+                ini_set("log_errors", 1);
+                ini_set("error_log", "/tmp/php-error.log");
+                $gen = new DataGenerator(Constants::GEN_ENVIRONMENT_POST, $this->post);
+                $response = $gen->generate();
+                $guid = utils::createGuid();
+                $fileName = $guid . "_" . $response["promptDownloadFilename"];
+                $zipFileName  = $fileName . ".zip";
+                $filePath = "./cache/" . $fileName;
+                $zipPath = "./cache/" . $zipFileName;
+                $zip = new ZipArchive();
+                if (!file_put_contents($filePath, $response["content"])) 
+                {
+                    error_log("Error: " . $filePath);   
+                    exit;
+                }
+                error_log(Core::getAwsKey() . ":" . Core::getAwsSecret() . ":" . Core::getRegionName());
+
+                $zipFile = $zip->open($zipPath, ZipArchive::CREATE);
+                if ($zipFile && $zip->addFile($filePath, $fileName)) {
+                // we've got our zip file now we may set the response header
+                $zip->close();
+                try {
+                        $s3 = new Aws\S3\S3Client([
+                            'version' => 'latest',
+                            'region' => Core::getRegionName(),
+                            'credentials' => array(
+                                'key' => Core::getAwsKey(),
+                                'secret'  => Core::getAwsSecret(),
+                            )
+                        ]);
+                        $result = $s3->putObject([
+                            'Bucket' => Core::getS3BucketName(),
+                            'Key'    => $zipFileName,
+                            'Body'   => fopen($zipPath, 'r')
+                        ]);
+                        $cmd = $s3->getCommand('GetObject', [
+                            'Bucket' => Core::getS3BucketName(),
+                            'Key'    => $zipFileName
+                        ]);
+                        $request = $s3->createPresignedRequest($cmd, '+5 minutes');
+                        $this->response["url"] = (string) $request->getUri();
+                        $this->response["keyName"] = $zipFileName;
+                        $this->response["bucketName"] = Core::getS3BucketName();
+
+                    } catch (Exception $e) {
+                        error_log(Core::getAwsKey() . ":" . Core::getAwsSecret());
+                        error_log("Failed upload " . $response["promptDownloadFilename"] . " to " . Core::getS3BucketName());
+                        error_log("There was an error uploading the file:\n" . $e);
+                        exit;
+                    }
+                error_log("DONE!");
+
+                $this->response["success"]    = $response["success"];
+                $this->response["content"]    = $response["content"];
+                $this->response["isComplete"] = $response["isComplete"];
+                break;
+            }
+        }
+    }   
 
 	// HELPERS
 

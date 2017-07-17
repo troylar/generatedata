@@ -145,6 +145,7 @@ $L["export_types_help"] = "This section lets you control the format of your gene
 $L["hide_data_format_options"] = "hide data format options";
 $L["show_data_format_options"] = "show data format options";
 $L["rows"] = "rows";
+$L["upload_to_s3"] = "Upload to S3";
 $L["generate_in_page"] = "Generate in-page";
 $L["new_window_or_tab"] = "New window/tab";
 $L["prompt_to_download"] = "Prompt to download";
