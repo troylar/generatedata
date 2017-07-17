@@ -352,6 +352,7 @@ class DataGenerator {
 	 * 		"inPage"
 	 * 		"newTab"
 	 * 		"promptDownload"
+	 * 		"uploadToS3"
 	 * @return string
 	 */
 	public function getExportTarget() {
